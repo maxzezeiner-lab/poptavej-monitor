@@ -1,0 +1,56 @@
+name: Poptavej.cz tender monitor
+
+on:
+  schedule:
+    # Every 3 days at 06:00 UTC.
+    #
+    # NOTE 1: cron's day-of-month field ("*/3") means "every 3rd day of the
+    # month" (1, 4, 7, ...), not a rolling 3-day interval -- it resets at
+    # the start of each month, so the gap around month boundaries can be
+    # 1-2 days short of 3. Good enough for this use case; adjust the cron
+    # expression if you ever need an exact rolling interval (e.g. via an
+    # external scheduler).
+    # NOTE 2: GitHub does not guarantee cron jobs fire at the exact minute
+    # scheduled, especially during periods of high load on GitHub's
+    # infrastructure. Runs may be delayed by minutes to (rarely) longer.
+    # This is expected and fine for this monitor.
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: {}  # "Run workflow" button on the Actions tab, for manual/on-demand runs.
+
+permissions:
+  contents: write  # needed to commit the updated seen-state file back to the repo
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r poptavej-monitor/requirements.txt
+
+      - name: Run monitor
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python poptavej-monitor/monitor.py
+
+      - name: Commit and push updated state file
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- poptavej-monitor/state/seen_tenders.json; then
+            git add poptavej-monitor/state/seen_tenders.json
+            git commit -m "Update poptavej.cz seen-tenders state [skip ci]"
+            git push
+          else
+            echo "No state changes to commit."
+          fi
