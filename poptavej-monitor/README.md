@@ -41,9 +41,9 @@ qualifying tenders each run, not for every listing.
 
 | Secret | Value |
 |---|---|
-| `GMAIL_ADDRESS` | The Gmail address to send *from* (currently `maxze.zeiner@gmail.com`) |
+| `GMAIL_ADDRESS` | The Gmail address to send *from* |
 | `GMAIL_APP_PASSWORD` | A Gmail **App Password** for that account (not your normal password) - create one at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) (requires 2-Step Verification enabled) |
-| `EMAIL_TO` | The recipient address (currently `maxze.zeiner@gmail.com`, same as sender for testing). Change this secret any time - no code changes needed. |
+| `EMAIL_TO` | The recipient address. Change this secret any time - no code changes needed. |
 
 ## Running it manually
 
